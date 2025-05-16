@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Settings | Workout Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body class="bg-gray-100 p-6 font-sans">
+
+    {% include 'navbar.html' %}
+
+    <div class="max-w-xl mx-auto">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 px-4 py-3 rounded {{ 'bg-green-100 text-green-800' if category == 'success' else 'bg-red-100 text-red-800' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- General Box -->
+        <div class="bg-white shadow-md p-6 rounded-lg mb-6">
+            <h3 class="text-xl font-semibold border-b pb-2 mb-3">General</h3>
+
+            <!-- Units Selection Box -->
+            <div class="mb-6 p-4 rounded border bg-gray-50 flex flex-col space-y-2">
+                <span class="text-gray-500 text-sm uppercase font-medium">Units</span>
+
+                <form method="POST" action="{{ url_for('main.settings') }}" id="unitsForm" class="flex space-x-6 mt-1">
+
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input 
+                            type="radio" 
+                            name="units" 
+                            value="metric" 
+                            {% if user.units == 'metric' %} checked {% endif %}
+                            class="form-radio text-blue-600"
+                            onchange="document.getElementById('unitsForm').submit()"
+                        />
+                        <span class="font-semibold text-lg">Metric (kg/km)</span>
+                    </label>
+
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input 
+                            type="radio" 
+                            name="units" 
+                            value="imperial" 
+                            {% if user.units == 'imperial' %} checked {% endif %}
+                            class="form-radio text-blue-600"
+                            onchange="document.getElementById('unitsForm').submit()"
+                        />
+                        <span class="font-semibold text-lg">Imperial (lbs/mi)</span>
+                    </label>
+
+                </form>
+            </div>
+
+
+            <!-- Download Data -->
+            <div class="mt-6 text-center">
+                <a 
+                    href="{{ url_for('main.download_workouts') }}" 
+                    class="w-full inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+                    download
+                >
+                    Download Workout Data (CSV)
+                </a>
+            </div>
+        </div>
+
+
+        <!-- Account Box -->
+        <div class="bg-white shadow-md p-6 rounded-lg">
+            <h3 class="text-xl font-semibold border-b pb-2 mb-3">Account</h3>
+
+            <div class="mb-6 p-4 rounded border bg-gray-50 flex flex-col space-y-1">
+                <span class="text-gray-500 text-sm uppercase font-medium">Username</span>
+                <span class="font-semibold text-lg">{{ user.username }}</span>
+            </div>
+
+            <div class="mb-6 p-4 rounded border bg-gray-50 flex flex-col space-y-1">
+                <span class="text-gray-500 text-sm uppercase font-medium">Email</span>
+                <span class="font-semibold text-lg">{{ user.email }}</span>
+            </div>
+
+            <!-- AlpineJS toggle for Change Password form -->
+            <div x-data="{ showChangePassword: false }" class="mt-4">
+
+                <button
+                    @click="showChangePassword = !showChangePassword"
+                    :class="showChangePassword ? 'bg-red-700 hover:bg-red-800' : 'bg-red-600 hover:bg-red-700'"
+                    class="w-full text-white px-4 py-2 rounded transition"
+                >
+                    Change Password
+                </button>
+
+                <form
+                    x-show="showChangePassword"
+                    x-transition
+                    method="POST"
+                    action="{{ url_for('main.settings') }}"
+                    class="mt-4 space-y-4"
+                    style="display: none;"
+                >
+                    <div>
+                        <label for="current_password" class="block font-medium mb-1">Current Password</label>
+                        <input
+                            type="password"
+                            name="current_password"
+                            id="current_password"
+                            required
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label for="new_password" class="block font-medium mb-1">New Password</label>
+                        <input
+                            type="password"
+                            name="new_password"
+                            id="new_password"
+                            required
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label for="confirm_password" class="block font-medium mb-1">Confirm New Password</label>
+                        <input
+                            type="password"
+                            name="confirm_password"
+                            id="confirm_password"
+                            required
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                    >
+                        Update Password
+                    </button>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

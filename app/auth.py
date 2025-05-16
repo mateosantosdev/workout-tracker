@@ -8,13 +8,18 @@ auth = Blueprint('auth', __name__)
 def register():
     if request.method == 'POST':
         username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
 
         if User.query.filter_by(username=username).first():
             flash("Username already exists.")
             return redirect(url_for('auth.register'))
+        
+        if User.query.filter_by(email=email).first():
+            flash("Email already registered.")
+            return redirect(url_for('auth.register'))
 
-        user = User(username=username)
+        user = User(username=username, email=email)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()

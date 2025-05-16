@@ -8,7 +8,7 @@
 <div class="max-w-xl mx-auto mb-6">
   <nav class="bg-white shadow rounded-lg">
     <div class="px-4 py-3 flex items-center justify-between">
-      <div class="text-xl font-semibold text-gray-700">Workout Tracker</div>
+      <div class="text-xl font-semibold text-gray-700"><a href="{{ url_for('main.index') }}">Workout Tracker</a></div>
 
       {% if user %}
       <div x-data="{ open: false }" class="relative">
@@ -30,7 +30,7 @@
           <div class="px-4 py-3 border-b rounded-t-lg font-semibold text-gray-700 bg-gray-50">
             {{ user.username }}
           </div>
-          <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
+          <a href="{{ url_for('main.settings')}}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
           <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-red-600 hover:bg-gray-100 rounded-b-lg">Log out</a>
         </div>
       </div>

@@ -1,6 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, abort
+from flask import Blueprint, render_template, request, redirect, url_for, session, abort, flash, Response
 from .models import db, Workout, User
 from datetime import datetime, timedelta
+import csv
+from io import StringIO
 
 main = Blueprint('main', __name__)
 
@@ -127,3 +129,88 @@ def delete_workout(workout_id):
     db.session.delete(workout)
     db.session.commit()
     return redirect(url_for('main.index', date=date))
+
+@main.route('/settings', methods=['GET', 'POST'])
+def settings():
+    user = None
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+    else:
+        return redirect(url_for('auth.login'))
+
+    if request.method == 'POST':
+        # Check if this is a password change attempt
+        if 'current_password' in request.form:
+            current_password = request.form.get('current_password')
+            new_password = request.form.get('new_password')
+            confirm_password = request.form.get('confirm_password')
+
+            if not current_password or not new_password or not confirm_password:
+                flash('Please fill in all password fields.', 'error')
+                return redirect(url_for('main.settings'))
+
+            if not user.check_password(current_password):
+                flash('Current password is incorrect.', 'error')
+                return redirect(url_for('main.settings'))
+
+            if new_password != confirm_password:
+                flash('New passwords do not match.', 'error')
+                return redirect(url_for('main.settings'))
+
+            # Here you should hash and update password
+            user.set_password(new_password)
+            db.session.commit()
+            flash('Password updated successfully.', 'success')
+            return redirect(url_for('main.settings'))
+
+        # Otherwise, it might be a units change
+        elif 'units' in request.form:
+            selected_units = request.form.get('units')
+            if selected_units in ['metric', 'imperial']:
+                user.units = selected_units
+                db.session.commit()
+                flash('Units updated successfully.', 'success')
+            else:
+                flash('Invalid units selected.', 'error')
+            return redirect(url_for('main.settings'))
+
+    # GET request renders the page
+    return render_template('settings.html', user=user)
+
+@main.route('/download_workouts')
+def download_workouts():
+    user = None
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+    else:
+        return redirect(url_for('auth.login'))
+    
+    workouts = Workout.query.filter_by(user_id=user.id).order_by(Workout.date.desc()).all()
+
+    si = StringIO()
+    cw = csv.writer(si)
+    
+    # Write header
+    cw.writerow(['Date', 'Type', 'Exercise', 'Sets', 'Reps', 'Weights', 'Distance', 'Duration'])
+
+    # Write workout data
+    for w in workouts:
+        cw.writerow([
+            w.date.strftime('%Y-%m-%d'),
+            w.type,
+            w.exercise,
+            w.sets or '',
+            w.reps or '',
+            w.weights or '',
+            w.distance or '',
+            w.duration or ''
+        ])
+
+    output = si.getvalue()
+    si.close()
+
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=workouts.csv"}
+    )

@@ -49,14 +49,18 @@
 
                         {% if workout.type == 'cardio' %}
                             <p class="text-sm text-gray-600">
-                                {{ workout.distance }} km – {{ workout.duration }} mins
+                                {% if user.units == 'imperial' %}
+                                    {{ workout.distance }} mi – {{ workout.duration }} mins
+                                {% else %}
+                                    {{ workout.distance }} km – {{ workout.duration }} mins
+                                {% endif %}
                             </p>
                         {% else %}
                             <p class="text-sm text-gray-700">
                                 {{ workout.sets }}x{{ workout.reps }}
                                 {% if workout.weights %}
                                     – {{ workout.weights }}
-                                {% endif %}
+                                {% endif %} {% if user.units == 'imperial' %}lbs{% else %}kg{% endif %}
                             </p>
                         {% endif %}
                     </div>
