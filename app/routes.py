@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, redirect, url_for
-from .models import db, Workout
+from flask import Blueprint, render_template, request, redirect, url_for, session, abort
+from .models import db, Workout, User
 from datetime import datetime, timedelta
 
 main = Blueprint('main', __name__)
@@ -10,9 +10,15 @@ def format_date_pretty(date_str):
 
 @main.route('/')
 def index():
+    user = None
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+    else:
+        return redirect(url_for('auth.login'))
+    
     date_str = request.args.get("date", datetime.today().strftime("%Y-%m-%d"))
     formatted_date = format_date_pretty(date_str)
-    workouts = Workout.query.filter_by(date=date_str).all()
+    workouts = workouts = Workout.query.filter_by(date=date_str, user_id=user.id).all()
 
     prev_date = (datetime.strptime(date_str, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
     next_date = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
@@ -26,6 +32,7 @@ def add_workout():
         date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
         exercise = request.form['exercise']
         workout_type = request.form['type']
+        user_id = session['user_id']
 
         if workout_type == 'cardio':
             distance = request.form.get('distance', '')
@@ -38,7 +45,8 @@ def add_workout():
                 duration=duration,
                 sets=0,
                 reps=0,
-                weights=None
+                weights=None,
+                user_id=user_id
             )
         else:
             sets = int(request.form['sets'])
@@ -56,7 +64,8 @@ def add_workout():
                 reps=reps,
                 weights=weights if weights else None,
                 distance=None,
-                duration=None
+                duration=None,
+                user_id=user_id
             )
 
         db.session.add(new_workout)
@@ -72,6 +81,8 @@ def add_workout():
 @main.route('/edit/<int:workout_id>', methods=['GET', 'POST'])
 def edit_workout(workout_id):
     workout = Workout.query.get_or_404(workout_id)
+    if workout.user_id != session['user_id']:
+        abort(403)
 
     if request.method == 'POST':
         workout.exercise = request.form['exercise']
@@ -109,6 +120,9 @@ def edit_workout(workout_id):
 @main.route('/delete/<int:workout_id>', methods=['POST'])
 def delete_workout(workout_id):
     workout = Workout.query.get_or_404(workout_id)
+    if workout.user_id != session['user_id']:
+        abort(403)
+
     date = workout.date.isoformat()
     db.session.delete(workout)
     db.session.commit()
