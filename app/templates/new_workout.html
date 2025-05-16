@@ -136,7 +136,7 @@
                 const count = parseInt(setsInput.value);
                 if (!isNaN(count) && count > 0 && count <= 10) {
                     // Load existing weights if available
-                    const presetWeights = {{ (workout.weights.split('/') if workout and workout.weights else []) | tojson }};
+                    const presetWeights = JSON.parse('{{ (workout.weights.split("/") if workout and workout.weights else []) | tojson | safe }}');
                     updateWeightInputs(count, presetWeights);
                 } else {
                     weightsDiv.innerHTML = '';
