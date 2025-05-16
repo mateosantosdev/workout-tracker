@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from .models import db, Workout
 from datetime import datetime, timedelta
-from datetime import datetime
 
 main = Blueprint('main', __name__)
 
@@ -26,25 +25,40 @@ def add_workout():
     if request.method == 'POST':
         date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
         exercise = request.form['exercise']
-        sets = int(request.form['sets'])
-        reps = int(request.form['reps'])
+        workout_type = request.form['type']
 
-        # Collect weights (optional)
-        weight_inputs = [
-            request.form.get('weight1', '').strip(),
-            request.form.get('weight2', '').strip(),
-            request.form.get('weight3', '').strip(),
-            request.form.get('weight4', '').strip(),
-        ]
-        weights = '/'.join([w for w in weight_inputs if w])
+        if workout_type == 'cardio':
+            distance = request.form.get('distance', '')
+            duration = request.form.get('duration', '')
+            new_workout = Workout(
+                date=date,
+                exercise=exercise,
+                type='cardio',
+                distance=distance,
+                duration=duration,
+                sets=0,
+                reps=0,
+                weights=None
+            )
+        else:
+            sets = int(request.form['sets'])
+            reps = int(request.form['reps'])
+            weight_inputs = [
+                request.form.get(f'weight{i+1}', '').strip()
+                for i in range(sets)
+            ]
+            weights = '/'.join([w for w in weight_inputs if w])
+            new_workout = Workout(
+                date=date,
+                exercise=exercise,
+                type='strength',
+                sets=sets,
+                reps=reps,
+                weights=weights if weights else None,
+                distance=None,
+                duration=None
+            )
 
-        new_workout = Workout(
-            date=date,
-            exercise=exercise,
-            sets=sets,
-            reps=reps,
-            weights=weights if weights else None
-        )
         db.session.add(new_workout)
         db.session.commit()
 
@@ -54,21 +68,35 @@ def add_workout():
     formatted_date = format_date_pretty(date_str)
     return render_template("new_workout.html", date=date_str, formatted_date=formatted_date)
 
+
 @main.route('/edit/<int:workout_id>', methods=['GET', 'POST'])
 def edit_workout(workout_id):
     workout = Workout.query.get_or_404(workout_id)
 
     if request.method == 'POST':
         workout.exercise = request.form['exercise']
-        workout.sets = int(request.form['sets'])
-        workout.reps = int(request.form['reps'])
+        workout.type = request.form['type']
 
-        # Collect weights
-        weight_inputs = [
-            request.form.get(f'weight{i+1}', '').strip()
-            for i in range(workout.sets)
-        ]
-        workout.weights = '/'.join([w for w in weight_inputs if w]) or None
+        if workout.type == 'strength':
+            workout.sets = int(request.form['sets']) if request.form['sets'] else 0
+            workout.reps = int(request.form['reps']) if request.form['reps'] else 0
+
+            weight_inputs = [
+                request.form.get(f'weight{i+1}', '').strip()
+                for i in range(workout.sets)
+            ]
+            workout.weights = '/'.join([w for w in weight_inputs if w]) or None
+
+            # Clear cardio fields
+            workout.distance = None
+            workout.duration = None
+
+        elif workout.type == 'cardio':
+            workout.sets = 0
+            workout.reps = 0
+            workout.weights = None
+            workout.distance = request.form.get('distance', '')
+            workout.duration = request.form.get('duration', '')
 
         db.session.commit()
         return redirect(url_for('main.index', date=workout.date.isoformat()))
