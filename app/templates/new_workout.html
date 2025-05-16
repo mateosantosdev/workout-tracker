@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Workout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+    <body class="bg-gray-100 p-6 font-sans">
+        <div class="max-w-xl mx-auto bg-white shadow-md p-6 rounded-lg">
+
+            <!-- Back Button -->
+            <div class="mb-4">
+                <a href="{{ url_for('main.index', date=date) }}" 
+                class="inline-block bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 text-sm">
+                    ← Back
+                </a>
+            </div>
+
+            <h2 class="text-2xl font-bold mb-4">{{ formatted_date }}<br><span class="text-lg">New Workout</span></h2>
+
+            <form method="POST">
+                <input type="hidden" name="date" value="{{ date }}">
+
+                <div class="mb-4">
+                    <label class="block font-semibold">Exercise Name</label>
+                    <input type="text" name="exercise" required
+                        value="{{ workout.exercise if workout else '' }}"
+                        class="w-full border rounded p-2 mt-1">
+                </div>
+
+                <div class="mb-4 flex space-x-2">
+                    <div class="flex-1">
+                        <label class="block font-semibold">Sets</label>
+                        <input type="number" name="sets" id="sets" min="1" max="10" required
+                            value="{{ workout.sets if workout else '' }}"
+                            class="w-full border rounded p-2 mt-1">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block font-semibold">Reps</label>
+                    <input type="number" name="reps" required
+                            value="{{ workout.reps if workout else '' }}"
+                            class="w-full border rounded p-2 mt-1">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block font-semibold">Weight per Set <span class="text-gray-500">(optional)</span></label>
+                    <div id="weightInputs" class="space-y-2 mt-2">
+                        <!-- JS will populate these -->
+                    </div>
+                </div>
+
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Submit
+                </button>
+            </form>
+
+            {% if workout %}
+            <form action="{{ url_for('main.delete_workout', workout_id=workout.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this workout?')">
+                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded mt-4">Delete</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <script>
+            const setsInput = document.getElementById('sets');
+            const weightsDiv = document.getElementById('weightInputs');
+
+            function updateWeightInputs(count, presetWeights = []) {
+                weightsDiv.innerHTML = '';
+                for (let i = 0; i < count; i++) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.name = `weight${i + 1}`;
+                    input.placeholder = `Weight ${i + 1}...`;
+                    input.className = 'w-full border rounded p-2';
+                    if (presetWeights[i]) {
+                        input.value = presetWeights[i];
+                    }
+                    weightsDiv.appendChild(input);
+                }
+            }
+
+            setsInput.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                if (!isNaN(val) && val > 0 && val <= 10) {
+                    updateWeightInputs(val);
+                } else {
+                    weightsDiv.innerHTML = '';
+                }
+            });
+
+            // Prefill logic
+            const initialSets = parseInt(setsInput.value);
+
+            // Use Jinja to pass weights list as JSON array — safe for JS
+            const initialWeights = {{ (workout.weights.split('/') if workout and workout.weights else []) | tojson }};
+
+            if (!isNaN(initialSets) && initialSets > 0 && initialSets <= 10) {
+                updateWeightInputs(initialSets, initialWeights);
+            }
+        </script>
+
+
+
+    </body>
+</html>

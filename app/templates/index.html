@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Workout Tracker</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body class="bg-gray-100 p-6 font-sans">
+        <div class="max-w-xl mx-auto bg-white shadow-md p-6 rounded-lg">
+
+            <!-- Top Navigation (Arrows + Date Picker) -->
+            <div class="flex items-center justify-between mb-6">
+
+                <!-- Prev Arrow -->
+                <a href="/?date={{ prev_date }}"
+                class="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </a>
+
+                <!-- Date Picker -->
+                <form method="get" action="/" class="flex items-center gap-2">
+                    <input type="date" id="date" name="date" value="{{ date }}"
+                        class="bg-gray-100 px-2 py-1 rounded text-sm cursor-pointer"
+                        onchange="this.form.submit()">
+                </form>
+
+                <!-- Next Arrow -->
+                <a href="/?date={{ next_date }}"
+                class="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
+
+            <!-- Workout List -->
+            {% for workout in workouts %}
+                <div class="mb-4 p-3 rounded border bg-gray-50 flex justify-between items-center">
+                    <div>
+                        <p class="font-semibold">{{ workout.exercise }}, {{ workout.sets }}x{{ workout.reps }}</p>
+                        {% if workout.weights %}
+                            <p class="text-sm text-gray-600">{{ workout.weights }}</p>
+                        {% endif %}
+                    </div>
+                    <a href="{{ url_for('main.edit_workout', workout_id=workout.id) }}"
+                    class="text-gray-500 hover:text-gray-700 p-2">
+                        <!-- Pencil icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15.232 5.232l3.536 3.536M9 11l6-6m2 2l-6 6M4 20h7l9-9-7-7-9 9v7z"/>
+                        </svg>
+                    </a>
+                </div>
+            {% else %}
+                <p class="text-gray-500">No workouts recorded for this day.</p>
+            {% endfor %}
+
+
+            <!-- Add Workout Button -->
+            <div class="mt-6 text-center">
+                <a href="{{ url_for('main.add_workout') }}?date={{ date }}"
+                class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Add workout
+                </a>
+            </div>
+        </div>
+
+
+    </body>
+</html>
