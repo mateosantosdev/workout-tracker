@@ -1,7 +1,6 @@
 from . import db
-from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
-from itsdangerous import URLSafeTimedSerializer
+from sqlalchemy import Float
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -11,7 +10,7 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
 
     units = db.Column(db.String(10), nullable=False, default='metric')
-    workouts = db.relationship('Workout', backref='user', lazy=True)
+    workouts = db.relationship('Exercise', backref='user', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -19,10 +18,11 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-class Workout(db.Model):
+class Exercise(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False)
     exercise = db.Column(db.String(100), nullable=False)
+    duration = db.Column(Float)  # allows for integers and floats e.g. 30 or 27.5
 
     # Type of workout
     type = db.Column(db.String(20), nullable=False, default='strength')  # strength or cardio
@@ -33,7 +33,6 @@ class Workout(db.Model):
     weights = db.Column(db.String(100))
 
     # Cardio fields
-    distance = db.Column(db.String(20))  # e.g. '5 km'
-    duration = db.Column(db.String(20))  # e.g. '00:25:00'
+    distance = db.Column(Float)  # allows for integers and floats e.g. 10 or 7.5
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
     <!-- Navbar Wrapper -->
@@ -31,6 +32,7 @@
             {{ user.username }}
           </div>
 
+          <a href="{{ url_for('main.dashboard')}}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Statistics</a>
           {% if user and user.is_admin %}
               <a href="{{ url_for('main.admin') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Admin</a>
           {% endif %}

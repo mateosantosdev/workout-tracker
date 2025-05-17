@@ -45,22 +45,21 @@
             {% for workout in workouts %}
                 <div class="mb-4 p-3 rounded border bg-gray-50 flex justify-between items-center">
                     <div>
-                        <p class="font-semibold">{{ workout.exercise }}</p>
-
+                        <p class="font-semibold">{{ workout.exercise }}, <span class="text-sm text-gray-700">{{ workout.duration }} mins</span></p>
                         {% if workout.type == 'cardio' %}
                             <p class="text-sm text-gray-600">
                                 {% if user.units == 'imperial' %}
-                                    {{ workout.distance }} mi – {{ workout.duration }} mins
+                                    {{ workout.distance }} mi 
                                 {% else %}
-                                    {{ workout.distance }} km – {{ workout.duration }} mins
+                                    {{ workout.distance }} km
                                 {% endif %}
                             </p>
                         {% else %}
                             <p class="text-sm text-gray-700">
                                 {{ workout.sets }}x{{ workout.reps }}
                                 {% if workout.weights %}
-                                    – {{ workout.weights }}
-                                {% endif %} {% if user.units == 'imperial' %}lbs{% else %}kg{% endif %}
+                                    – {{ workout.weights }} {% if user.units == 'imperial' %}lbs{% else %}kg{% endif %}
+                                {% endif %} 
                             </p>
                         {% endif %}
                     </div>
@@ -85,7 +84,7 @@
             <div class="mt-6 text-center">
                 <a href="{{ url_for('main.add_workout') }}?date={{ date }}"
                 class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    Add workout
+                    Add Exercise
                 </a>
             </div>
         </div>

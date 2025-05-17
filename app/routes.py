@@ -1,18 +1,18 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, abort, flash, Response
 from werkzeug.security import generate_password_hash
-from .models import db, Workout, User
+from .models import db, Exercise, User
+from .utils import *
 from datetime import datetime, timedelta
 import csv
 from io import StringIO
 import string
 import secrets
 from functools import wraps
+from collections import defaultdict
+from decimal import Decimal
 
 main = Blueprint('main', __name__)
 
-def format_date_pretty(date_str):
-    date = datetime.strptime(date_str, "%Y-%m-%d")
-    return date.strftime("%d %B %Y")  # e.g. 16 May 2025
 
 @main.route('/')
 def index():
@@ -24,7 +24,7 @@ def index():
     
     date_str = request.args.get("date", datetime.today().strftime("%Y-%m-%d"))
     formatted_date = format_date_pretty(date_str)
-    workouts = workouts = Workout.query.filter_by(date=date_str, user_id=user.id).all()
+    workouts = Exercise.query.filter_by(date=date_str, user_id=user.id).all()
 
     prev_date = (datetime.strptime(date_str, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
     next_date = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
@@ -39,15 +39,14 @@ def add_workout():
         exercise = request.form['exercise']
         workout_type = request.form['type']
         user_id = session['user_id']
+        duration = float(request.form['duration'])
 
         if workout_type == 'cardio':
-            distance = request.form.get('distance', '')
-            duration = request.form.get('duration', '')
-            new_workout = Workout(
+            new_workout = Exercise(
                 date=date,
                 exercise=exercise,
                 type='cardio',
-                distance=distance,
+                distance=float(request.form.get('distance', 0)),
                 duration=duration,
                 sets=0,
                 reps=0,
@@ -62,7 +61,7 @@ def add_workout():
                 for i in range(sets)
             ]
             weights = '/'.join([w for w in weight_inputs if w])
-            new_workout = Workout(
+            new_workout = Exercise(
                 date=date,
                 exercise=exercise,
                 type='strength',
@@ -70,9 +69,12 @@ def add_workout():
                 reps=reps,
                 weights=weights if weights else None,
                 distance=None,
-                duration=None,
+                duration=duration,
                 user_id=user_id
             )
+
+        print(f"New Workout: {new_workout}")
+        print(new_workout.__dict__)
 
         db.session.add(new_workout)
         db.session.commit()
@@ -86,13 +88,14 @@ def add_workout():
 
 @main.route('/edit/<int:workout_id>', methods=['GET', 'POST'])
 def edit_workout(workout_id):
-    workout = Workout.query.get_or_404(workout_id)
+    workout = Exercise.query.get_or_404(workout_id)
     if workout.user_id != session['user_id']:
         abort(403)
 
     if request.method == 'POST':
         workout.exercise = request.form['exercise']
         workout.type = request.form['type']
+        workout.duration = request.form['duration']
 
         if workout.type == 'strength':
             workout.sets = int(request.form['sets']) if request.form['sets'] else 0
@@ -106,14 +109,12 @@ def edit_workout(workout_id):
 
             # Clear cardio fields
             workout.distance = None
-            workout.duration = None
 
         elif workout.type == 'cardio':
             workout.sets = 0
             workout.reps = 0
             workout.weights = None
-            workout.distance = request.form.get('distance', '')
-            workout.duration = request.form.get('duration', '')
+            workout.distance = float(request.form.get('distance', 0))
 
         db.session.commit()
         return redirect(url_for('main.index', date=workout.date.isoformat()))
@@ -125,7 +126,7 @@ def edit_workout(workout_id):
 
 @main.route('/delete/<int:workout_id>', methods=['POST'])
 def delete_workout(workout_id):
-    workout = Workout.query.get_or_404(workout_id)
+    workout = Exercise.query.get_or_404(workout_id)
     if workout.user_id != session['user_id']:
         abort(403)
 
@@ -134,7 +135,7 @@ def delete_workout(workout_id):
     db.session.commit()
     return redirect(url_for('main.index', date=date))
 
-# Admin Menu
+# ---------- Admin Page ----------
 
 @main.route('/admin')
 def admin():
@@ -208,8 +209,7 @@ def revoke_admin(user_id):
     flash(f"{user.username}'s admin privilegs have been revoked.", "success")
     return redirect(url_for('main.admin'))
 
-# Settings Menu
-
+# ---------- Settings Page ----------
 @main.route('/settings', methods=['GET', 'POST'])
 def settings():
     user = None
@@ -297,7 +297,7 @@ def download_workouts():
     else:
         return redirect(url_for('auth.login'))
     
-    workouts = Workout.query.filter_by(user_id=user.id).order_by(Workout.date.desc()).all()
+    workouts = Exercise.query.filter_by(user_id=user.id).order_by(Exercise.date.desc()).all()
 
     si = StringIO()
     cw = csv.writer(si)
@@ -325,4 +325,62 @@ def download_workouts():
         output,
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment;filename=workouts.csv"}
+    )
+
+# ---------- Stats Page ----------
+
+@main.route('/dashboard')
+def dashboard():
+    user = None
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+    else:
+        return redirect(url_for('auth.login'))
+    
+    period = request.args.get('period', 'week')
+    today = datetime.now().date()
+    
+    if period == 'month':
+        start_date = today.replace(day=1)
+        end_date = (start_date + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+
+    else:  # week
+        start_date = today - timedelta(days=today.weekday())
+        end_date = start_date + timedelta(days=6)
+
+    day_span = (end_date - start_date).days + 1
+
+    exercises = Exercise.query.filter(
+        Exercise.user_id == session['user_id'],
+        Exercise.date >= start_date,
+        Exercise.date <= end_date
+    ).all()
+
+    daily_durations = get_daily_durations(exercises, start_date, day_span)
+
+    workout_duration_graph_labels = [(start_date + timedelta(days=i)).strftime('%d/%m') for i in range(day_span)]
+    workout_duration_graph_data = [daily_durations.get(start_date + timedelta(days=i), 0) for i in range(day_span)]
+
+    workout_type_percentages, workout_type_durations = get_time_per_type(exercises)
+
+    total_workout_duration = format_duration(sum(daily_durations.values()))
+    longest_workout_duration = format_duration(max(daily_durations.values()) if daily_durations else 0)
+
+    total_cardio_distance = get_total_cardio_distance(exercises)
+
+    total_strength_volume = get_total_strength_volume(exercises)
+
+    fastest_pace_formatted = get_fastest_pace(exercises)
+
+    return render_template('dashboard.html',
+                           period=period,                    
+                           workout_duration_graph_labels=workout_duration_graph_labels,
+                           workout_duration_graph_data=workout_duration_graph_data,
+                           workout_type_percentages=workout_type_percentages,
+                           workout_type_durations=workout_type_durations,
+                           total_workout_duration=total_workout_duration,
+                           longest_workout_duration=longest_workout_duration,
+                           total_cardio_distance=total_cardio_distance,
+                           fastest_pace_formatted=fastest_pace_formatted,
+                           total_strength_volume=total_strength_volume,
     )

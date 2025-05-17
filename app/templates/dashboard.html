@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Stats | Workout Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body class="bg-gray-100 p-6 font-sans">
+
+    {% include 'navbar.html' %}
+
+    <div class="max-w-xl mx-auto">
+        
+        <div class="flex justify-center mb-4">
+            <div class="inline-flex items-center bg-gray-200 rounded-lg p-1 text-sm font-medium">
+                <a href="{{ url_for('main.dashboard', period='week') }}"
+                class="px-3 py-1 rounded-lg {{ 'bg-white shadow' if period == 'week' else 'text-gray-600 hover:bg-gray-300' }}">
+                    Week
+                </a>
+                <a href="{{ url_for('main.dashboard', period='month') }}"
+                class="px-3 py-1 rounded-lg {{ 'bg-white shadow' if period == 'month' else 'text-gray-600 hover:bg-gray-300' }}">
+                    Month
+                </a>
+            </div>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-semibold mb-4 border-b pb-2">Your stats for this {{ period }}</h3>
+
+            <h4 class="text-l font-semibold mb-4">Time Spent Working Out</h4>
+            <canvas id="workoutsLineChartWeek" class="mb-6 h-48 w-full"></canvas>
+
+            <h4 class="text-l font-semibold mb-4">Exercise Type Distribution</h4>
+            <div class="w-full h-32 mb-6">
+                <canvas id="workoutTypeBarChart"></canvas>
+            </div>
+
+            <!-- Total Workout Time -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+                <h4 class="text-lg font-semibold text-gray-700 mb-1">Total Workout Time</h4>
+                <p class="text-2xl text-blue-600 font-bold">{{ total_workout_duration }}</p>
+            </div>
+
+            <!-- Longest Workout Time -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+                <h4 class="text-lg font-semibold text-gray-700 mb-1">Longest Workout</h4>
+                <p class="text-2xl text-blue-600 font-bold">{{ longest_workout_duration }}</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+                <h4 class="text-lg font-semibold text-gray-700 mb-1">Total Cardio Distance</h4>
+                <p class="text-2xl text-blue-600 font-bold">
+                    {% if user.units == 'imperial' %}
+                        {{ total_cardio_distance }} mi 
+                    {% else %}
+                        {{ total_cardio_distance }} km
+                    {% endif %}</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+                <h4 class="text-lg font-semibold text-gray-700 mb-1">Fastest Pace</h4>
+                <p class="text-2xl text-blue-600 font-bold">{{ fastest_pace_formatted }}</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+                <h4 class="text-lg font-semibold text-gray-700 mb-1">Total Weight Lifted</h4>
+                <p class="text-2xl text-green-600 font-bold">{{ total_strength_volume }} kg</p>
+            </div>
+
+            
+
+
+        </div>
+
+    </div>
+
+    <script>
+        function createLineChart(ctxId, labels, data, name) {
+            const ctx = document.getElementById(ctxId).getContext('2d');
+            const maxValue = Math.max(...data) + 5;
+
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: name,
+                        data: data,
+                        fill: false,
+                        borderColor: 'rgb(37 99 235)',  // Tailwind blue-600
+                        backgroundColor: 'rgb(37 99 235)',
+                        tension: 0.3,
+                        pointRadius: function(context) {
+                            return context.dataset.data[context.dataIndex] === 0 ? 0 : 4;
+                        },
+                        pointHoverRadius: 6,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: maxValue,
+                            precision: 0,
+                            stepSize: 1,
+                            ticks: { stepSize: 1 }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: true,
+                }
+            });
+        }
+
+        function createWorkoutTypeBarChart(ctxId, cardioPercent, strengthPercent, cardioTime, strengthTime) {
+            const ctx = document.getElementById(ctxId).getContext('2d');
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [''],
+                    datasets: [
+                        {
+                            label: 'Cardio',
+                            data: [cardioPercent],
+                            backgroundColor: '#3b82f6', // Tailwind blue-600
+                            stack: 'workout',
+                            customTime: cardioTime
+                        },
+                        {
+                            label: 'Strength',
+                            data: [strengthPercent],
+                            backgroundColor: '#10b981', // Tailwind green-500
+                            stack: 'workout',
+                            customTime: strengthTime
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            max: 100,
+                            ticks: {
+                                callback: (value) => `${value}%`,
+                                stepSize: 20
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            grid: {
+                                display: false,
+                                drawBorder: false,
+                                drawTicks: false
+                            },
+                            border: {
+                                display: false
+                            },
+                            ticks: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const percent = context.raw.toFixed(1);
+                                    const time = context.dataset.customTime || '';
+                                    return `${label}: ${percent}% (${time})`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                boxWidth: 16,
+                                padding: 12
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // Create weekly chart
+        createLineChart(
+            'workoutsLineChartWeek',
+            {{ workout_duration_graph_labels|tojson }}, 
+            {{ workout_duration_graph_data|tojson }}, 
+            "Total Time (mins)")
+        ;
+
+        createWorkoutTypeBarChart(
+            'workoutTypeBarChart',
+            {{ workout_type_percentages['cardio'] }},
+            {{ workout_type_percentages['strength'] }},
+            "{{ workout_type_durations['cardio'] }}",
+            "{{ workout_type_durations['strength'] }}"
+        );
+
+    </script>
+
+
+
+</body>
+</html>
