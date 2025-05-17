@@ -7,7 +7,10 @@ from flask_migrate import upgrade
 def initialise_app():
     app = create_app()
     with app.app_context():
-        # Apply any pending migrations
+        # Create the database tables if they don't exist yet
+        db.create_all()
+
+        # Apply any pending migrations (optional, but good practice)
         upgrade()
 
         # Admin details from environment or defaults

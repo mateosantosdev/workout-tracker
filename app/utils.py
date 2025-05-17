@@ -87,7 +87,7 @@ def get_fastest_pace(exercises):
     for ex in exercises:
         if ex.type == 'cardio' and ex.distance and ex.duration:
             try:
-                km = float(ex.distance.split()[0])
+                km = float(ex.distance)
                 if km > 0:
                     pace = ex.duration / km  # minutes per km
                     if fastest is None or pace < fastest:

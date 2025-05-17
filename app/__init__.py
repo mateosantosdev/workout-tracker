@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+import os
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -9,7 +10,8 @@ def create_app():
     app = Flask(__name__)
     app.secret_key = 'temp'
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../workouts.db'
+    db_path = os.getenv('SQLITE_DB_PATH', 'sqlite:///app.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     db.init_app(app)

@@ -33,10 +33,10 @@
           </div>
 
           <a href="{{ url_for('main.dashboard')}}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Statistics</a>
+          <a href="{{ url_for('main.settings')}}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
           {% if user and user.is_admin %}
               <a href="{{ url_for('main.admin') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Admin</a>
           {% endif %}
-          <a href="{{ url_for('main.settings')}}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
           <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-red-600 hover:bg-gray-100 rounded-b-lg">Log out</a>
 
         </div>
