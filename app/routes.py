@@ -1,8 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, abort, flash, Response
+from werkzeug.security import generate_password_hash
 from .models import db, Workout, User
 from datetime import datetime, timedelta
 import csv
 from io import StringIO
+import string
+import secrets
+from functools import wraps
 
 main = Blueprint('main', __name__)
 
@@ -130,6 +134,82 @@ def delete_workout(workout_id):
     db.session.commit()
     return redirect(url_for('main.index', date=date))
 
+# Admin Menu
+
+@main.route('/admin')
+def admin():
+    user = None
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+    else:
+        return redirect(url_for('auth.login'))
+    
+    if not user.is_admin:
+        return redirect(url_for('main.index'))
+    
+    users = User.query.all()
+    return render_template('admin.html', users=users)
+
+@main.route('/admin/reset_password/<int:user_id>', methods=['POST'])
+def reset_user_password(user_id):
+    from .models import User 
+    user = User.query.get_or_404(user_id)
+
+    # Only allow if current user is admin
+    from flask import session
+    admin_user = User.query.get(session.get('user_id'))
+    if not admin_user or not admin_user.is_admin:
+        flash('Access denied', 'error')
+        return redirect(url_for('main.admin'))
+
+    # Generate a secure random password
+    characters = string.ascii_letters + string.digits
+    new_password = ''.join(secrets.choice(characters) for _ in range(10))
+
+    # Set and hash the password
+    user.set_password(new_password)
+    db.session.commit()
+
+    flash(f"Password for {user.username} has been reset to: {new_password}", "success")
+    return redirect(url_for('main.admin'))
+
+@main.route('/admin/make_admin/<int:user_id>', methods=['POST'])
+def make_admin(user_id):
+    from .models import User
+    user = User.query.get_or_404(user_id)
+
+    admin_user = User.query.get(session.get('user_id'))
+    if not admin_user or not admin_user.is_admin:
+        flash('Access denied', 'error')
+        return redirect(url_for('main.index'))
+
+    user.is_admin = True
+    db.session.commit()
+    flash(f"{user.username} is now an admin.", "success")
+    return redirect(url_for('main.admin'))
+
+@main.route('/admin/revoke/<int:user_id>', methods=['POST'])
+def revoke_admin(user_id):
+    from .models import User
+    user = User.query.get_or_404(user_id)
+
+    admin_user = User.query.get(session.get('user_id'))
+    if not admin_user or not admin_user.is_admin:
+        flash('Access denied', 'error')
+        return redirect(url_for('main.index'))
+    
+    admin_count = User.query.filter_by(is_admin=True).count()
+    if admin_count <= 1:
+        flash('Cannot revoke admin privileges from the last remaining admin.', 'error')
+        return redirect(url_for('main.admin'))
+
+    user.is_admin = False
+    db.session.commit()
+    flash(f"{user.username}'s admin privilegs have been revoked.", "success")
+    return redirect(url_for('main.admin'))
+
+# Settings Menu
+
 @main.route('/settings', methods=['GET', 'POST'])
 def settings():
     user = None
@@ -139,7 +219,7 @@ def settings():
         return redirect(url_for('auth.login'))
 
     if request.method == 'POST':
-        # Check if this is a password change attempt
+        # Handle password change
         if 'current_password' in request.form:
             current_password = request.form.get('current_password')
             new_password = request.form.get('new_password')
@@ -157,13 +237,12 @@ def settings():
                 flash('New passwords do not match.', 'error')
                 return redirect(url_for('main.settings'))
 
-            # Here you should hash and update password
             user.set_password(new_password)
             db.session.commit()
             flash('Password updated successfully.', 'success')
             return redirect(url_for('main.settings'))
 
-        # Otherwise, it might be a units change
+        # Handle units change
         elif 'units' in request.form:
             selected_units = request.form.get('units')
             if selected_units in ['metric', 'imperial']:
@@ -173,6 +252,39 @@ def settings():
             else:
                 flash('Invalid units selected.', 'error')
             return redirect(url_for('main.settings'))
+
+        # Handle username/email updates
+        elif request.form.get('form_type') == 'update_account':
+            update_field = request.form.get('update_field')
+
+            if update_field == 'username':
+                new_username = request.form.get('new_username')
+                if not new_username:
+                    flash('Username cannot be empty.', 'error')
+                elif new_username == user.username:
+                    flash('Username is unchanged.', 'info')
+                elif User.query.filter_by(username=new_username).first():
+                    flash('That username is already taken.', 'error')
+                else:
+                    user.username = new_username
+                    db.session.commit()
+                    flash('Username updated successfully.', 'success')
+
+            elif update_field == 'email':
+                new_email = request.form.get('new_email')
+                if not new_email:
+                    flash('Email cannot be empty.', 'error')
+                elif new_email == user.email:
+                    flash('Email is unchanged.', 'info')
+                elif User.query.filter_by(email=new_email).first():
+                    flash('That email is already taken.', 'error')
+                else:
+                    user.email = new_email
+                    db.session.commit()
+                    flash('Email updated successfully.', 'success')
+
+            return redirect(url_for('main.settings'))
+
 
     # GET request renders the page
     return render_template('settings.html', user=user)

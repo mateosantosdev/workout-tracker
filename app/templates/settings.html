@@ -78,15 +78,118 @@
         <div class="bg-white shadow-md p-6 rounded-lg">
             <h3 class="text-xl font-semibold border-b pb-2 mb-3">Account</h3>
 
-            <div class="mb-6 p-4 rounded border bg-gray-50 flex flex-col space-y-1">
-                <span class="text-gray-500 text-sm uppercase font-medium">Username</span>
-                <span class="font-semibold text-lg">{{ user.username }}</span>
+            <!-- Username Editable -->
+            <div x-data="{ editUsername: false, username: '{{ user.username }}' }"
+                class="mb-6 p-4 rounded border bg-gray-50 flex items-center justify-between">
+
+                <div class="flex flex-col space-y-1 w-full">
+                    <span class="text-gray-500 text-sm uppercase font-medium">Username</span>
+
+                    <form x-show="editUsername"
+                        method="POST"
+                        action="{{ url_for('main.settings') }}"
+                        class="flex items-center w-full"
+                        @submit.prevent="$refs.submitBtn.click()"
+                        style="display: none;">
+                        <input type="hidden" name="form_type" value="update_account">
+                        <input type="hidden" name="update_field" value="username">
+                        <input type="text"
+                            name="new_username"
+                            x-model="username"
+                            class="font-semibold text-lg bg-transparent border-0 focus:outline-none focus:ring-0 w-full autofill:shadow-none"
+                            required />
+                        <button type="submit" x-ref="submitBtn" class="hidden"></button>
+                    </form>
+
+                    <span x-show="!editUsername"
+                        x-text="username"
+                        class="font-semibold text-lg w-full"></span>
+                </div>
+
+                <button
+                    @click="if (editUsername) $refs.submitBtn.click(); editUsername = !editUsername"
+                    class="text-gray-600 hover:text-blue-600 transition ml-2">
+                    <template x-if="editUsername">
+                        <!-- Tick Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 text-blue-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 13l4 4L19 7" />
+                        </svg>
+                    </template>
+                    <template x-if="!editUsername">
+                        <!-- Pencil Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15.232 5.232l3.536 3.536M9 11l6-6m2 2l-6 6M4 20h7l9-9-7-7-9 9v7z"/>
+                        </svg>
+                    </template>
+                </button>
             </div>
 
-            <div class="mb-6 p-4 rounded border bg-gray-50 flex flex-col space-y-1">
-                <span class="text-gray-500 text-sm uppercase font-medium">Email</span>
-                <span class="font-semibold text-lg">{{ user.email }}</span>
+            <!-- Email Editable -->
+            <div x-data="{ editEmail: false, email: '{{ user.email }}' }"
+                class="mb-6 p-4 rounded border bg-gray-50 flex items-center justify-between">
+
+                <div class="flex flex-col space-y-1 w-full">
+                    <span class="text-gray-500 text-sm uppercase font-medium">Email</span>
+
+                    <form x-show="editEmail"
+                        method="POST"
+                        action="{{ url_for('main.settings') }}"
+                        class="flex items-center w-full"
+                        style="display: none;">
+                        <input type="hidden" name="form_type" value="update_account">
+                        <input type="hidden" name="update_field" value="email">
+                        <input type="email"
+                            name="new_email"
+                            x-model="email"
+                            class="font-semibold text-lg bg-transparent border-0 focus:outline-none focus:ring-0 w-full autofill:shadow-none"
+                            required />
+                        <button type="submit" x-ref="submitBtnEmail" class="hidden"></button>
+                    </form>
+
+                    <span x-show="!editEmail"
+                        x-text="email"
+                        class="font-semibold text-lg w-full"></span>
+                </div>
+
+                <button
+                @click="editEmail = !editEmail; if (!editEmail) $el.closest('div').querySelector('form').submit()"
+                class="text-gray-600 hover:text-blue-600 transition ml-2">
+
+                    <template x-if="editEmail">
+                        <!-- Tick Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 text-blue-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 13l4 4L19 7" />
+                        </svg>
+                    </template>
+                    <template x-if="!editEmail">
+                        <!-- Pencil Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15.232 5.232l3.536 3.536M9 11l6-6m2 2l-6 6M4 20h7l9-9-7-7-9 9v7z"/>
+                        </svg>
+                    </template>
+                </button>
             </div>
+
 
             <!-- AlpineJS toggle for Change Password form -->
             <div x-data="{ showChangePassword: false }" class="mt-4">
