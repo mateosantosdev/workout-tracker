@@ -57,6 +57,8 @@ You can customise these via environment variables.
 
 ## 🐳 Docker Deployment
 
+The image for this project can be found on [Docker](https://hub.docker.com/r/ennoluto/workout-tracker).
+
 ### ⚡ Quick Start
 ```bash
 docker build -t workout-tracker .
