@@ -76,6 +76,8 @@ docker run -d -p 5000:5000 \
 ```
 
 ### 🧰 Docker Compose (recommended)
+Create the file first at ./app.db so that docker doesn't assume its a directory.
+
 ```yaml
 version: '3.8'
 services:
