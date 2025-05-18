@@ -3,6 +3,12 @@
 A simple and self-hostable workout tracking web app built with **Flask**, **SQLite**, and **Docker**.
 ---
 
+## 📺 Demo
+
+
+[![image](https://github.com/user-attachments/assets/d09abade-95e8-410d-b899-5bb033b6c019)](https://www.youtube.com/watch?v=xcMvPMsAjEs)
+
+
 ## 🚀 Features
 
 - ✅ Log daily workouts by category and exercise type  
@@ -64,7 +70,7 @@ The image for this project can be found on [Docker](https://hub.docker.com/r/enn
 docker build -t workout-tracker .
 docker run -d -p 5000:5000 \
   -e PORT=5000 \
-  -e SQLITE_DB_PATH=sqlite:///app.db \
+  -e SQLITE_DB_PATH=sqlite:////app/app.db \
   -v $(pwd)/app.db:/app/app.db \
   workout-tracker
 ```
@@ -80,7 +86,7 @@ services:
       - "5000:5000"  # host:container (change host port if you want, e.g. "272:5000")
     environment:
       - PORT=5000
-      - SQLITE_DB_PATH=sqlite:///app.db
+      - SQLITE_DB_PATH=sqlite:////app/app.db
     volumes:
       - ./app.db:/app/app.db
 ```
