@@ -64,7 +64,7 @@ The image for this project can be found on [Docker](https://hub.docker.com/r/enn
 docker build -t workout-tracker .
 docker run -d -p 5000:5000 \
   -e PORT=5000 \
-  -e SQLITE_DB_PATH=sqlite:///app.db \
+  -e SQLITE_DB_PATH=sqlite:////app/app.db \
   -v $(pwd)/app.db:/app/app.db \
   workout-tracker
 ```
