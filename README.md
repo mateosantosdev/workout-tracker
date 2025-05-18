@@ -80,7 +80,7 @@ services:
       - "5000:5000"  # host:container (change host port if you want, e.g. "272:5000")
     environment:
       - PORT=5000
-      -  SQLITE_DB_PATH=sqlite:////app/app.db
+      - SQLITE_DB_PATH=sqlite:////app/app.db
     volumes:
       - ./app.db:/app/app.db
 ```
