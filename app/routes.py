@@ -209,6 +209,25 @@ def revoke_admin(user_id):
     flash(f"{user.username}'s admin privilegs have been revoked.", "success")
     return redirect(url_for('main.admin'))
 
+@main.route('/admin/delete_user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    from .models import User
+    user = User.query.get_or_404(user_id)
+
+    admin_user = User.query.get(session.get('user_id'))
+    if not admin_user or not admin_user.is_admin:
+        flash('Access denied', 'error')
+        return redirect(url_for('main.admin'))
+
+    if user.id == admin_user.id:
+        flash("You can't delete your own account while logged in.", 'error')
+        return redirect(url_for('main.admin'))
+
+    db.session.delete(user)
+    db.session.commit()
+    flash(f"{user.username}'s account has been deleted.", 'success')
+    return redirect(url_for('main.admin'))
+
 # ---------- Settings Page ----------
 @main.route('/settings', methods=['GET', 'POST'])
 def settings():
