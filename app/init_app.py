@@ -3,15 +3,23 @@ from app import create_app, db
 from app.models import User
 from werkzeug.security import generate_password_hash
 from flask_migrate import upgrade
+from sqlalchemy import inspect
 
 def initialise_app():
     app = create_app()
     with app.app_context():
-        # Create the database tables if they don't exist yet
-        db.create_all()
+        
+        inspector = inspect(db.engine)
+        if not inspector.get_table_names():
+            print("No tables found — initialising database...")
+            db.create_all()
+        else:
+            print("Database already initialised.")
 
-        # Apply any pending migrations (optional, but good practice)
-        upgrade()
+        try:
+            upgrade()
+        except Exception as e:
+            print("Migration error or unnecessary:", e)
 
         # Admin details from environment or defaults
         admin_username = os.getenv('ADMIN_USERNAME', 'admin')
