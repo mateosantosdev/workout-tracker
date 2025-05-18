@@ -88,9 +88,7 @@
                     <form x-show="editUsername"
                         method="POST"
                         action="{{ url_for('main.settings') }}"
-                        class="flex items-center w-full"
-                        @submit.prevent="$refs.submitBtn.click()"
-                        style="display: none;">
+                        class="flex items-center w-full">
                         <input type="hidden" name="form_type" value="update_account">
                         <input type="hidden" name="update_field" value="username">
                         <input type="text"
@@ -98,7 +96,7 @@
                             x-model="username"
                             class="font-semibold text-lg bg-transparent border-0 focus:outline-none focus:ring-0 w-full autofill:shadow-none"
                             required />
-                        <button type="submit" x-ref="submitBtn" class="hidden"></button>
+                        <button type="submit" class="hidden" x-ref="submitBtn"></button>
                     </form>
 
                     <span x-show="!editUsername"

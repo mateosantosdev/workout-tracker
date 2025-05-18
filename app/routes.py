@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, abort, flash, Response
-from werkzeug.security import generate_password_hash
 from .models import db, Exercise, User
 from .utils import *
 from datetime import datetime, timedelta
@@ -7,9 +6,6 @@ import csv
 from io import StringIO
 import string
 import secrets
-from functools import wraps
-from collections import defaultdict
-from decimal import Decimal
 
 main = Blueprint('main', __name__)
 
