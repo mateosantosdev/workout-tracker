@@ -3,6 +3,11 @@
 A simple and self-hostable workout tracking web app built with **Flask**, **SQLite**, and **Docker**.
 ---
 
+## 📺 Demo
+
+![image](https://github.com/user-attachments/assets/d09abade-95e8-410d-b899-5bb033b6c019)
+
+
 ## 🚀 Features
 
 - ✅ Log daily workouts by category and exercise type  
