@@ -5,7 +5,8 @@ A simple and self-hostable workout tracking web app built with **Flask**, **SQLi
 
 ## 📺 Demo
 
-![image](https://github.com/user-attachments/assets/d09abade-95e8-410d-b899-5bb033b6c019)
+
+[![image](https://github.com/user-attachments/assets/d09abade-95e8-410d-b899-5bb033b6c019)](https://www.youtube.com/watch?v=xcMvPMsAjEs)
 
 
 ## 🚀 Features
