@@ -13,6 +13,6 @@ RUN chmod +x entrypoint.sh
 EXPOSE 5000
 
 ENV PORT=5000
-ENV SQLITE_DB_PATH=sqlite:///app.db
+ENV SQLITE_DB_PATH=sqlite:////app/app.db
 
 CMD ["./entrypoint.sh"]
