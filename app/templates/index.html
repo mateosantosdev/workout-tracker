@@ -55,12 +55,17 @@
                                 {% endif %}
                             </p>
                         {% else %}
+                            {% if workout.sets or workout.reps %}
                             <p class="text-sm text-gray-700">
-                                {{ workout.sets }}x{{ workout.reps }}
+                                <div class="flex items-center gap-2">
+                                    {% if workout.sets %}<span>sets: {{ workout.sets }}</span>{% endif %}
+                                    {% if workout.reps %}<span>reps: {{ workout.reps }}</span>{% endif %}
+                                </div>
                                 {% if workout.weights %}
                                     – {{ workout.weights }} {% if user.units == 'imperial' %}lbs{% else %}kg{% endif %}
                                 {% endif %} 
                             </p>
+                            {% endif %}
                         {% endif %}
                     </div>
 

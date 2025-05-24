@@ -50,8 +50,8 @@ def add_workout():
                 user_id=user_id
             )
         else:
-            sets = int(request.form['sets'])
-            reps = int(request.form['reps'])
+            sets = int(request.form['sets']) if request.form['sets'] else 0
+            reps = int(request.form['reps']) if request.form['reps'] else 0
             weight_inputs = [
                 request.form.get(f'weight{i+1}', '').strip()
                 for i in range(sets)
