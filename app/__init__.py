@@ -10,7 +10,8 @@ def create_app():
     app = Flask(__name__)
     app.secret_key = 'temp'
 
-    db_path = os.getenv('SQLITE_DB_PATH', 'sqlite:///app.db')
+    default_path = os.path.join(os.path.dirname(__file__), 'app.db')
+    db_path = os.getenv('SQLITE_DB_PATH', f"sqlite:///{default_path}")
     app.config['SQLALCHEMY_DATABASE_URI'] = db_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
