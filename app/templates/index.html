@@ -56,15 +56,15 @@
                             </p>
                         {% else %}
                             {% if workout.sets or workout.reps %}
-                            <p class="text-sm text-gray-700">
-                                <div class="flex items-center gap-2">
-                                    {% if workout.sets %}<span>sets: {{ workout.sets }}</span>{% endif %}
-                                    {% if workout.reps %}<span>reps: {{ workout.reps }}</span>{% endif %}
+                            <div class="text-sm text-gray-700">
+                                <div class="flex items-center gap-1">
+                                    <p>{% if workout.sets %}<span class="font-semibold">Sets:</span> {{ workout.sets }}{% endif %},</p>
+                                    <p>{% if workout.reps %}<span class="font-semibold p-0">Reps:</span> {{ workout.reps }}{% endif %}</p>                                    
                                 </div>
                                 {% if workout.weights %}
-                                    – {{ workout.weights }} {% if user.units == 'imperial' %}lbs{% else %}kg{% endif %}
+                                    {{ workout.weights }} {% if user.units == 'imperial' %}lbs{% else %}kg{% endif %}
                                 {% endif %} 
-                            </p>
+                            </div>
                             {% endif %}
                         {% endif %}
                     </div>
