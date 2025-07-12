@@ -45,7 +45,7 @@
             {% for workout in workouts %}
                 <div class="mb-4 p-3 rounded border bg-gray-50 flex justify-between items-center">
                     <div>
-                        <p class="font-semibold">{{ workout.exercise }}, <span class="text-sm text-gray-700">{{ workout.duration }} mins</span></p>
+                        <p class="font-semibold">{{ workout.exercise }} {% if workout.duration %}, <span class="text-sm text-gray-700">{{ workout.duration }} mins</span>{% endif %}</p>
                         {% if workout.type == 'cardio' %}
                             <p class="text-sm text-gray-600">
                                 {% if user.units == 'imperial' %}

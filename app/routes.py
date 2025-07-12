@@ -35,7 +35,7 @@ def add_workout():
         exercise = request.form['exercise']
         workout_type = request.form['type']
         user_id = session['user_id']
-        duration = float(request.form['duration'])
+        duration = float(request.form['duration']) if request.form['duration'] else None
 
         if workout_type == 'cardio':
             new_workout = Exercise(
@@ -91,7 +91,7 @@ def edit_workout(workout_id):
     if request.method == 'POST':
         workout.exercise = request.form['exercise']
         workout.type = request.form['type']
-        workout.duration = request.form['duration']
+        workout.duration = float(request.form['duration']) if request.form['duration'] else None
 
         if workout.type == 'strength':
             workout.sets = int(request.form['sets']) if request.form['sets'] else 0
